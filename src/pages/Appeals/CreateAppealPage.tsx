@@ -35,7 +35,7 @@ export const CreateAppealPage = () => {
         await uploadAppealFiles(result._id, files);
       }
 
-      navigate(`/?success=${result._id}`);
+      navigate(`/appeals/?success=${result._id}`);
     } catch (err: any) {
       setError(err.message || "Ошибка при создании обращения");
     } finally {
@@ -63,7 +63,7 @@ export const CreateAppealPage = () => {
 
   return (
     <Box sx={{ maxWidth: 700, mx: "auto", p: 4 }}>
-      <Card sx={{ p: 4, borderRadius: 3, background: theme.palette.background.fourth }}>
+      <Card sx={{ p: 4, borderRadius: 1, background: theme.palette.background.fourth }}>
         <Typography variant="h5" fontWeight={700} mb={0.5}>
           Подать обращение
         </Typography>
@@ -121,7 +121,7 @@ export const CreateAppealPage = () => {
           />
 
           <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
-            <Button variant="outlined" onClick={() => navigate("/")} sx={{ textTransform: "none" }}>
+            <Button variant="outlined" onClick={() => navigate("/appeals")} sx={{ textTransform: "none" }}>
               Отмена
             </Button>
             <Button variant="contained" startIcon={<SendIcon />} onClick={handleSubmit} disabled={loading} sx={{ textTransform: "none", fontWeight: 600 }}>

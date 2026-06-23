@@ -43,6 +43,7 @@ export interface AppealStats {
   total: number;
   pending: number;
   in_review: number;
+  accepted: number;
   resolved: number;
   rejected: number;
 }

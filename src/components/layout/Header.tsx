@@ -1,13 +1,28 @@
-import { Box, Typography, Button, Menu, MenuItem, IconButton, Avatar } from "@mui/material";
+import { Box, Typography, Button, Menu, MenuItem, IconButton, Avatar, Badge, Divider } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "../../utils/UserContext";
 import { useThemeContext } from "../../utils/ThemeContext";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LaptopIcon from "@mui/icons-material/Laptop";
 import LocalPoliceIcon from "@mui/icons-material/LocalPolice";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import { useTheme } from "@mui/material/styles";
+import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from "../../services/notificationService";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+
+interface Notification {
+  _id: string;
+  user_id: string;
+  appeal_id: string;
+  type: string;
+  text: string;
+  read: boolean;
+  created_at: string;
+}
 
 export const Header = () => {
   const theme = useTheme();
@@ -18,6 +33,38 @@ export const Header = () => {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [userMenuEl, setUserMenuEl] = useState<null | HTMLElement>(null);
+  const [notifAnchor, setNotifAnchor] = useState<null | HTMLElement>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [count, notifs] = await Promise.all([getUnreadCount(), getNotifications()]);
+      setUnreadCount(count.count);
+      setNotifications(notifs);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchData();
+    intervalRef.current = setInterval(fetchData, 15000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [user, fetchData]);
+
+  const handleNotifClick = async (n: Notification) => {
+    if (!n.read) await markAsRead(n._id).catch(() => {});
+    setNotifAnchor(null);
+    navigate(isOfficer ? "/admin" : "/appeals");
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllAsRead().catch(() => {});
+    fetchData();
+  };
 
   const active = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
 
@@ -49,6 +96,8 @@ export const Header = () => {
         background: theme.palette.background.nineth,
         borderBottom: `1px solid ${theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
         px: 3,
+        position: "relative",
+        zIndex: 2,
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -61,6 +110,9 @@ export const Header = () => {
         </Typography>
 
         <Button sx={tabStyle("/")} onClick={() => navigate("/")} disableRipple>
+          Главная
+        </Button>
+        <Button sx={tabStyle("/appeals")} onClick={() => navigate("/appeals")} disableRipple>
           Мои обращения
         </Button>
         <Button sx={tabStyle("/create")} onClick={() => navigate("/create")} disableRipple>
@@ -81,6 +133,62 @@ export const Header = () => {
           <MenuItem onClick={() => { setMode("light"); setAnchorEl(null); }}>Светлая</MenuItem>
           <MenuItem onClick={() => { setMode("dark"); setAnchorEl(null); }}>Тёмная</MenuItem>
           <MenuItem onClick={() => { setMode("system"); setAnchorEl(null); }}>Системная</MenuItem>
+        </Menu>
+
+        <IconButton onClick={(e) => setNotifAnchor(e.currentTarget)} sx={{ color: "text.primary" }}>
+          <Badge badgeContent={unreadCount} color="error" max={99}>
+            <NotificationsNoneIcon />
+          </Badge>
+        </IconButton>
+
+        <Menu
+          anchorEl={notifAnchor}
+          open={Boolean(notifAnchor)}
+          onClose={() => setNotifAnchor(null)}
+          slotProps={{ paper: { sx: { maxWidth: 400, minWidth: 340, maxHeight: 480 } } }}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 2, py: 1 }}>
+            <Typography variant="subtitle2" fontWeight={600}>Уведомления</Typography>
+            {unreadCount > 0 && (
+              <Button size="small" startIcon={<MarkEmailReadIcon />} onClick={handleMarkAllRead} sx={{ textTransform: "none", fontSize: 12 }}>
+                Прочитать все
+              </Button>
+            )}
+          </Box>
+          <Divider />
+          {notifications.length === 0 && (
+            <Box sx={{ py: 4, textAlign: "center" }}>
+              <Typography variant="body2" color="text.secondary">Нет уведомлений</Typography>
+            </Box>
+          )}
+          {notifications.slice(0, 20).map((n) => (
+            <Box key={n._id}>
+              <MenuItem
+                onClick={() => handleNotifClick(n)}
+                sx={{
+                  whiteSpace: "normal",
+                  py: 1.5,
+                  px: 2,
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  background: n.read ? "transparent" : theme.palette.action.hover,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, width: "100%" }}>
+                  <Typography variant="body2" sx={{ flex: 1, fontWeight: n.read ? 400 : 600 }}>
+                    {n.text}
+                  </Typography>
+                  {!n.read && <Box sx={{ width: 8, height: 8, borderRadius: "50%", background: theme.palette.primary.main, flexShrink: 0 }} />}
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  {n.created_at ? format(new Date(n.created_at), "dd MMM HH:mm", { locale: ru }) : ""}
+                </Typography>
+              </MenuItem>
+              <Divider />
+            </Box>
+          ))}
         </Menu>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer" }}
