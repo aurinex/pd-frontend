@@ -1,7 +1,7 @@
 import {
   Box, Typography, Card, CardContent, Grid, Button, Select, MenuItem, FormControl, InputLabel,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Chip, IconButton, Tabs, Tab, Avatar,
-  Switch, FormControlLabel, Collapse,
+  Switch, FormControlLabel, Collapse, keyframes,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { getAppeals, updateAppealStatus, getAppealStats, toggleAllowMessages } from "../../services/appealService";
@@ -21,11 +21,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ArticleIcon from "@mui/icons-material/Article";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { motion, AnimatePresence } from "framer-motion";
 
 const COLORS = ["#FFB74D", "#64B5F6", "#1976D2", "#81C784", "#E57373"];
 
-const MotionCard = motion(Card);
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
 export const AdminAppealsPage = () => {
   const theme = useTheme();
@@ -124,13 +126,13 @@ export const AdminAppealsPage = () => {
 
   return (
     <Box sx={{ maxWidth: 1100, mx: "auto", p: 4, pl: { md: 8 } }}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <Box sx={{ animation: `${fadeIn} 0.25s ease forwards` }}>
         <Typography variant="h5" fontWeight={700} mb={0.5}>Панель управления</Typography>
         <Typography variant="body2" color="text.secondary" mb={4}>Управление обращениями граждан</Typography>
-      </motion.div>
+      </Box>
 
       {stats && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+        <Box sx={{ animation: `${fadeIn} 0.25s 0.05s ease forwards`, opacity: 0 }}>
           <Grid container spacing={2} mb={4}>
               {[
                 { label: "Всего", value: stats.total, color: "text.primary" },
@@ -141,25 +143,24 @@ export const AdminAppealsPage = () => {
                 { label: "Отклонено", value: stats.rejected, color: "error.main" },
               ].map((s, i) => (
                 <Grid size={{ xs: 6, md: 4 }} key={i}>
-                <MotionCard
-                  sx={{ p: 2.5, textAlign: "center", background: theme.palette.background.fourth }}
-                  whileHover={{ y: -2 }}
+                <Card
+                  sx={{ p: 2.5, textAlign: "center", background: theme.palette.background.fourth, transition: "transform 0.15s", "&:hover": { transform: "translateY(-2px)" } }}
                 >
                   <Typography variant="h4" fontWeight={700} color={s.color}>{s.value}</Typography>
                   <Typography variant="caption" color="text.secondary">{s.label}</Typography>
-                </MotionCard>
+                </Card>
               </Grid>
             ))}
           </Grid>
-        </motion.div>
+        </Box>
       )}
 
       <Grid container spacing={3} mb={4}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
-            <Card sx={{ p: 3, background: theme.palette.background.fourth, height: "100%" }}>
+          <Box sx={{ animation: `${fadeIn} 0.25s 0.1s ease forwards`, opacity: 0, height: "100%" }}>
+            <Card sx={{ p: 3, background: theme.palette.background.fourth, height: "100%", display: "flex", flexDirection: "column" }}>
               <Typography variant="subtitle1" fontWeight={600} mb={2}>Распределение по статусам</Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 3 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 140 }}>
                   {statusCounts.filter(s => s.value > 0).map((s, i) => (
                     <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -171,21 +172,23 @@ export const AdminAppealsPage = () => {
                     </Box>
                   ))}
                 </Box>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie data={statusCounts} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value">
-                      {statusCounts.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <Box sx={{ width: "100%", height: 220 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={statusCounts} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value">
+                        {statusCounts.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Box>
               </Box>
             </Card>
-          </motion.div>
+          </Box>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
+          <Box sx={{ animation: `${fadeIn} 0.25s 0.1s ease forwards`, opacity: 0, height: "100%" }}>
             <Card sx={{ p: 3, background: theme.palette.background.fourth, height: "100%" }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                 <Typography variant="subtitle1" fontWeight={600}>Последние обращения</Typography>
@@ -194,40 +197,33 @@ export const AdminAppealsPage = () => {
                 </Button>
               </Box>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {recentAppeals.map((a, i) => (
-                  <motion.div
+                {recentAppeals.map((a) => (
+                  <Box
                     key={a._id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    sx={{
+                      display: "flex", alignItems: "center", gap: 1.5, py: 1, px: 1.5,
+                      borderRadius: 2, cursor: "pointer",
+                      "&:hover": { background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)" },
+                    }}
+                    onClick={() => openAppeal(a)}
                   >
-                    <Box
-                      sx={{
-                        display: "flex", alignItems: "center", gap: 1.5, py: 1, px: 1.5,
-                        borderRadius: 2, cursor: "pointer",
-                        "&:hover": { background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)" },
-                      }}
-                      onClick={() => openAppeal(a)}
-                    >
-                      <ArticleIcon fontSize="small" color="action" />
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={500} noWrap>{a.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          От: {a.is_anonymous ? "Анонимно" : `${a.author_surname} ${a.author_name}`}
-                        </Typography>
-                      </Box>
-                      <StatusChip status={a.status} />
+                    <ArticleIcon fontSize="small" color="action" />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={500} noWrap>{a.title}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        От: {a.is_anonymous ? "Анонимно" : `${a.author_surname} ${a.author_name}`}
+                      </Typography>
                     </Box>
-                  </motion.div>
+                    <StatusChip status={a.status} />
+                  </Box>
                 ))}
               </Box>
             </Card>
-          </motion.div>
+          </Box>
         </Grid>
       </Grid>
 
       <Collapse in={showAll}>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
           <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
             <Tab label="Все" />
             <Tab label="Ожидают" />
@@ -291,10 +287,9 @@ export const AdminAppealsPage = () => {
               </Grid>
             ))}
           </Grid>
-        </motion.div>
       </Collapse>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.3 }}>
+      <Box sx={{ animation: `${fadeIn} 0.25s 0.15s ease forwards`, opacity: 0 }}>
         <Card sx={{ p: 3, background: theme.palette.background.fourth }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={600}>Объявления</Typography>
@@ -306,30 +301,28 @@ export const AdminAppealsPage = () => {
             <Typography variant="body2" color="text.secondary">Пока нет объявлений</Typography>
           )}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {announcements.map((a, i) => (
-              <motion.div key={a._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <Box sx={{
-                  p: 2, borderRadius: 2,
-                  background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-                }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight={600}>{a.title}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {a.author} · {a.created_at ? format(new Date(a.created_at), "dd MMM yyyy, HH:mm", { locale: ru }) : ""}
-                      </Typography>
-                    </Box>
-                    <IconButton size="small" onClick={() => deleteAnnouncement(a._id).then(loadData)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+            {announcements.map((a) => (
+              <Box key={a._id} sx={{
+                p: 2, borderRadius: 2,
+                background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+              }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600}>{a.title}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {a.author} · {a.created_at ? format(new Date(a.created_at), "dd MMM yyyy, HH:mm", { locale: ru }) : ""}
+                    </Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 1 }}>{a.content}</Typography>
+                  <IconButton size="small" onClick={() => deleteAnnouncement(a._id).then(loadData)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
                 </Box>
-              </motion.div>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 1 }}>{a.content}</Typography>
+              </Box>
             ))}
           </Box>
         </Card>
-      </motion.div>
+      </Box>
 
       <Dialog open={!!confirmDialog} onClose={() => setConfirmDialog(null)} maxWidth="xs">
         {confirmDialog && (

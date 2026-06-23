@@ -1,9 +1,8 @@
-import { Box, Typography, Card, Accordion, AccordionSummary, AccordionDetails, Grid } from "@mui/material";
+import { Box, Typography, Card, Accordion, AccordionSummary, AccordionDetails, Grid, keyframes } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import { useUser } from "../../utils/UserContext";
 import { getAnnouncements } from "../../services/announcementService";
-import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import LocalPoliceIcon from "@mui/icons-material/LocalPolice";
@@ -14,6 +13,11 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import DescriptionIcon from "@mui/icons-material/Description";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import InfoIcon from "@mui/icons-material/Info";
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
 const references = [
   {
@@ -61,22 +65,20 @@ export const DashboardPage = () => {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: "auto", p: 4, pl: { md: 8 } }}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-          <LocalPoliceIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />
-          <Box>
-            <Typography variant="h5" fontWeight={700}>
-              {isOfficer ? "Панель управления" : "Личный кабинет"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Добро пожаловать, {user?.surname} {user?.name}
-            </Typography>
-          </Box>
+      <Box sx={{ animation: `${fadeIn} 0.3s ease forwards`, display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+        <LocalPoliceIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />
+        <Box>
+          <Typography variant="h5" fontWeight={700}>
+            {isOfficer ? "Панель управления" : "Личный кабинет"}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Добро пожаловать, {user?.surname} {user?.name}
+          </Typography>
         </Box>
-      </motion.div>
+      </Box>
 
       {isOfficer && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+        <Box sx={{ animation: `${fadeIn} 0.3s 0.05s ease forwards`, opacity: 0 }}>
           <Card sx={{ p: 4, mb: 3, background: theme.palette.background.fourth, borderRadius: 3 }}>
             <Typography variant="h6" fontWeight={600} gutterBottom>
               Добро пожаловать в систему
@@ -86,11 +88,11 @@ export const DashboardPage = () => {
               Здесь отображаются актуальные объявления и новости.
             </Typography>
           </Card>
-        </motion.div>
+        </Box>
       )}
 
       {!isOfficer && !isAdmin && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+        <Box sx={{ animation: `${fadeIn} 0.3s 0.05s ease forwards`, opacity: 0 }}>
           <Card sx={{ p: 3, background: theme.palette.background.fourth, borderRadius: 1, mb: 3 }}>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               {[
@@ -113,13 +115,13 @@ export const DashboardPage = () => {
               ))}
             </Box>
           </Card>
-        </motion.div>
+        </Box>
       )}
 
       {!isOfficer && !isAdmin && (
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+            <Box sx={{ animation: `${fadeIn} 0.3s 0.1s ease forwards`, opacity: 0 }}>
               <Card sx={{ p: 3, background: theme.palette.background.fourth, borderRadius: 1, mb: 3 }}>
                 <Typography variant="subtitle1" fontWeight={600} mb={2} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <ArticleIcon fontSize="small" /> Справочные материалы
@@ -150,38 +152,35 @@ export const DashboardPage = () => {
                   </Accordion>
                 ))}
               </Card>
-            </motion.div>
+            </Box>
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
+            <Box sx={{ animation: `${fadeIn} 0.3s 0.15s ease forwards`, opacity: 0 }}>
               <Card sx={{ p: 3, background: theme.palette.background.fourth, borderRadius: 1, position: "sticky", top: 80 }}>
                 <Typography variant="subtitle1" fontWeight={600} mb={2}>Объявления</Typography>
                 {announcements.length === 0 && (
                   <Typography variant="body2" color="text.secondary">Пока нет объявлений</Typography>
                 )}
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {announcements.map((a, i) => (
-                    <motion.div key={a._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                      <Box sx={{
-                        p: 2, borderRadius: 1,
-                        background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-                      }}>
-                        <Typography variant="subtitle2" fontWeight={600}>{a.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {a.created_at ? format(new Date(a.created_at), "dd MMM", { locale: ru }) : ""}
-                        </Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 0.5 }}>{a.content}</Typography>
-                      </Box>
-                    </motion.div>
+                  {announcements.map((a) => (
+                    <Box key={a._id} sx={{
+                      p: 2, borderRadius: 1,
+                      background: theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                    }}>
+                      <Typography variant="subtitle2" fontWeight={600}>{a.title}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {a.created_at ? format(new Date(a.created_at), "dd MMM", { locale: ru }) : ""}
+                      </Typography>
+                      <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 0.5 }}>{a.content}</Typography>
+                    </Box>
                   ))}
                 </Box>
               </Card>
-            </motion.div>
+            </Box>
           </Grid>
         </Grid>
       )}
-
 
     </Box>
   );
